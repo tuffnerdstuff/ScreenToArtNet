@@ -37,22 +37,19 @@ func (a *Ambilight) Go() error {
 	start := time.Now()
 
 	for {
-		monitorImage, err := a.Screen.Capture()
+		err := a.Screen.Capture()
 		if err != nil {
 			panic(err)
 		}
 
-		areaImages := a.Screen.CutAreaImages(monitorImage)
-
-		for _, areaImage := range areaImages {
-			devices, ok := a.Mappings[&areaImage.Area.Borders]
+		for _, area := range a.Screen.Areas {
+			devices, ok := a.Mappings[&area.ImageData.Borders]
 			if !ok {
 				// This area has no devices mapped.
 				continue
 			}
 
-			// TODO: Get Config
-			areaColor, err := areaImage.GetColor(0, 0)
+			areaColor, err := area.ImageData.GetColor()
 			if err != nil {
 				panic(err)
 			}

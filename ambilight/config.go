@@ -50,7 +50,7 @@ func ReadConfig(configPath string) (areas []capture.Area, universes []*dmx.Unive
 	}
 
 	for areaName, areaRect := range raw.Areas {
-		areas = append(areas, capture.Area{Name: areaName, Borders: *areaRect})
+		areas = append(areas, capture.Area{Name: areaName, ImageData: capture.ImageData{Borders: *areaRect}})
 	}
 
 	universes, err = raw.constructUniverses()

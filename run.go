@@ -14,11 +14,7 @@ func run() error {
 
 	s := capture.NewScreen(
 		areas,
-		capture.CaptureConfig{
-			Spacing:   *args.Spacing,
-			Threshold: *args.Threshold,
-			Monitor:   *args.Screen,
-		},
+		capture.NewCaptureConfig(args),
 	)
 
 	c, err := dmx.NewArtNetController(

@@ -8,76 +8,97 @@ import (
 	"github.com/kbinani/screenshot"
 )
 
+var NO_IMAGE image.RGBA
+
 // Screen represents a tiled screen.
 type Screen struct {
 	// Areas holds the screen areas.
 	Areas []Area
-	// Borders holds the capturing borders.
-	Borders image.Rectangle
-
-	// Config holds the configuration for the screen capture.
-}
-
-// CaptureConfig holds the configuration for the screen capture.
-type CaptureConfig struct {
-	// Spacing holds the averaging spacing.
-	Spacing int
-	// Threshold holds the averaged color threshold.
-	Threshold int
-
-	// Monitor holds the monitor used for capture.
-	Monitor int
+	// Last capture
+	captureImage *image.RGBA
+	// Whole monitor image data
+	ImageData ImageData
 }
 
 type Area struct {
-	Name    string
-	Borders image.Rectangle
+	Name      string
+	ImageData ImageData
 }
 
-type AreaImage struct {
-	Area  Area
-	Image *image.RGBA
+type ImageData struct {
+	config  imageDataConfig
+	image   **image.RGBA
+	color   *color.RGBA
+	Borders image.Rectangle
 }
 
 // NewScreen returns a new screen, tiled with the given configuration.
 func NewScreen(areas []Area, config CaptureConfig) *Screen {
-	return &Screen{
-		Areas:   areas,
+
+	screen := Screen{
+		Areas:        areas,
+		captureImage: &NO_IMAGE,
+	}
+
+	// init monitor image data with pointer to capture
+	screen.ImageData = ImageData{
+		config:  config.imageDataConfig,
+		image:   &screen.captureImage,
 		Borders: screenshot.GetDisplayBounds(config.Monitor),
 	}
+
+	// init area image data with pointer to capture
+	for i := range areas {
+		areas[i].ImageData.config = config.imageDataConfig
+		areas[i].ImageData.image = &screen.captureImage
+	}
+
+	return &screen
 }
 
-func (s *Screen) Capture() (monitor *image.RGBA, err error) {
-	monitor, err = screenshot.CaptureRect(s.Borders)
+func (s *Screen) Capture() error {
+	monitorImage, err := screenshot.CaptureRect(s.ImageData.Borders)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return monitor, nil
+	s.captureImage = monitorImage
+
+	return nil
 }
 
-func (s *Screen) CutAreaImages(monitor *image.RGBA) []AreaImage {
-	areas := make([]AreaImage, len(s.Areas))
-	for i, b := range s.Areas {
-		areas[i].Area = b
-		areas[i].Image = monitor.SubImage(b.Borders).(*image.RGBA)
+func (d *ImageData) GetImage() (*image.RGBA, error) {
+
+	monitorImage := *d.image
+	if monitorImage == &NO_IMAGE {
+		return nil, fmt.Errorf("no image data, capture screen first")
 	}
-	return areas
+	return monitorImage.SubImage(d.Borders).(*image.RGBA), nil
+
 }
 
-func (a *AreaImage) GetColor(space int, threshold int) (color.RGBA, error) {
-	image := a.Image
+func (d *ImageData) GetColor() (color.RGBA, error) {
+	var computedColor color.RGBA
+	image, err := d.GetImage()
+	if err != nil {
+		return computedColor, err
+	}
+	if d.color != nil {
+		return *d.color, nil
+	}
 	var r uint64
 	var g uint64
 	var b uint64
 
 	var count uint64 = 1
 
+	space := d.config.Spacing
+	threshold := d.config.Threshold
 	if space < 1 {
-		return color.RGBA{}, fmt.Errorf("invalid spacing for averaging (%v)", space)
+		return computedColor, fmt.Errorf("invalid spacing for averaging (%v)", space)
 	}
 	if threshold < 0 || threshold > 255 {
-		return color.RGBA{}, fmt.Errorf("invalid threshold for averaging (%v)", threshold)
+		return computedColor, fmt.Errorf("invalid threshold for averaging (%v)", threshold)
 	}
 
 	for x := image.Rect.Min.X; x < image.Rect.Max.X; x = x + space {
@@ -100,10 +121,12 @@ func (a *AreaImage) GetColor(space int, threshold int) (color.RGBA, error) {
 		}
 	}
 
-	return color.RGBA{
+	computedColor = color.RGBA{
 		R: uint8(r / count),
 		G: uint8(g / count),
 		B: uint8(b / count),
 		A: 255,
-	}, nil
+	}
+
+	return computedColor, nil
 }

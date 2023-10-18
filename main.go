@@ -1,40 +1,15 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/bauersimon/ScreenToArtNet/config"
 )
 
-var args = struct {
-	Mode      *string
-	Src       *string
-	Dst       *string
-	Pause     *int
-	Screen    *int
-	Spacing   *int
-	Threshold *int
-	Config    *string
-}{
-	flag.String("mode", "run", "tool mode {run|preview}"),
-	flag.String("src", "", "artnet source"),
-	flag.String("dst", "", "artnet destination"),
-	flag.Int("pause", 0, "pause time in ms"),
-	flag.Int("screen", 0, "screen identifier"),
-	flag.Int("spacing", 1, "spacing of pixels for averaging"),
-	flag.Int("threshold", 0, "threshold of color (0<255)"),
-	flag.String("config", "config.json", "config file"),
-}
-
-func parseArgs() {
-	if len(os.Args) == 1 {
-		flag.PrintDefaults()
-		return
-	}
-	flag.Parse()
-}
+var args config.Args
 
 func handleInterrupts() {
 	// Make sure we clean everything up.
@@ -70,11 +45,13 @@ func handleError(err error) {
 }
 
 func main() {
-	parseArgs()
+	args = config.Parse()
+
+	if !config.Validate() {
+		os.Exit(-1)
+	}
 
 	handleInterrupts()
 
-	err := executeMode()
-
-	handleError(err)
+	handleError(executeMode())
 }

@@ -19,13 +19,16 @@ func preview() error {
 
 	s := capture.NewScreen(
 		areas,
-		capture.CaptureConfig{
-			Monitor: *args.Screen,
-		},
+		capture.NewCaptureConfig(args),
 	)
 
-	// save screen
-	monitorImage, err := s.Capture()
+	// capture screen
+	err = s.Capture()
+	if err != nil {
+		return err
+	}
+	// save monitor image
+	monitorImage, err := s.ImageData.GetImage()
 	if err != nil {
 		return err
 	}
@@ -34,9 +37,13 @@ func preview() error {
 		return err
 	}
 
-	// save areas
-	for _, a := range s.CutAreaImages(monitorImage) {
-		err = saveArea(fmt.Sprintf("area_%s.png", a.Area.Name), a.Image)
+	// save area images
+	for _, a := range s.Areas {
+		areaImage, err := a.ImageData.GetImage()
+		if err != nil {
+			return err
+		}
+		err = saveArea(fmt.Sprintf("area_%s.png", a.Name), areaImage)
 		if err != nil {
 			return err
 		}
