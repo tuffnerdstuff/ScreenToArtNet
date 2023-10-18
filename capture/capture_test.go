@@ -6,13 +6,15 @@ import (
 )
 
 func BenchmarkCapture(b *testing.B) {
-	s := NewScreen(
-		[]*image.Rectangle{
-			&image.Rectangle{
-				Min: image.Point{0, 0},
-				Max: image.Point{800, 600},
-			},
+	area := Area{
+		Name: "bla",
+		Borders: image.Rectangle{
+			Min: image.Point{0, 0},
+			Max: image.Point{800, 600},
 		},
+	}
+	s := NewScreen(
+		[]Area{area},
 		CaptureConfig{
 			Monitor: 1,
 		},
@@ -27,8 +29,11 @@ func BenchmarkCapture(b *testing.B) {
 	for name, space := range spacings {
 		b.Run(name, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				s.Config.Spacing = space
-				s.GetColors()
+				monitorImage, _ := s.Capture()
+				areaImages := s.CutAreaImages(monitorImage)
+				for _, areaImage := range areaImages {
+					areaImage.GetColor(space, 0)
+				}
 			}
 		})
 	}
