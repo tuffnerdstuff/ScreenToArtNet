@@ -23,7 +23,6 @@ func Parse() Args {
 		flag.String("src", "", "artnet source"),
 		flag.String("dst", "", "artnet destination"),
 		flag.Int("screen", 0, "screen identifier"),
-		// TODO: use percent of area instead as areas could be of different size
 		flag.Int("spacing", 1, "spacing of pixels for averaging"),
 		flag.Int("threshold", 0, "threshold of color (0<255)"),
 		flag.String("config", "./config.json", "config file"),
@@ -39,6 +38,8 @@ func (a *Args) Validate() bool {
 	if *a.Mode == "run" {
 		if *a.Dst == "" {
 			fmt.Println("dst must be set to artnet node")
+		} else if *a.Spacing < 1 {
+			fmt.Println("spacing must be >= 1")
 		} else if *a.Fps < 1 {
 			fmt.Println("fps must be >= 1")
 		} else if *a.Workers < 1 {
