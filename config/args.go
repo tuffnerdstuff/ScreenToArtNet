@@ -3,7 +3,6 @@ package config
 import (
 	"flag"
 	"fmt"
-	"os"
 )
 
 type Args struct {
@@ -37,11 +36,16 @@ func Parse() Args {
 
 func (a *Args) Validate() bool {
 	valid := false
-	if len(os.Args) == 1 {
-	} else if *a.Fps < 1 {
-		fmt.Println("fps must be >= 1")
-	} else if *a.Workers < 1 {
-		fmt.Println("workers must be >= 1")
+	if *a.Mode == "run" {
+		if *a.Dst == "" {
+			fmt.Println("dst must be set to artnet node")
+		} else if *a.Fps < 1 {
+			fmt.Println("fps must be >= 1")
+		} else if *a.Workers < 1 {
+			fmt.Println("workers must be >= 1")
+		} else {
+			valid = true
+		}
 	} else {
 		valid = true
 	}

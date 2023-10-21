@@ -17,7 +17,6 @@ type imageDataConfig struct {
 	Threshold int
 }
 
-// TODO: Do the same for other configs
 func NewCaptureConfig(args config.Args) CaptureConfig {
 	return CaptureConfig{
 		Monitor: *args.Screen,

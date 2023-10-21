@@ -24,7 +24,6 @@ type Ambilight struct {
 }
 
 // AmbilightConfiguration holds the configuration for the ambilight.
-// TODO: handle negative values
 type AmbilightConfiguration struct {
 	// target frames per second
 	Fps uint
@@ -89,7 +88,6 @@ func (a *Ambilight) Go() error {
 }
 
 func getColorJob(a *Ambilight, area capture.Area) func() {
-	// TODO: maybe link directly in Area?
 	devices, ok := a.Mappings[area.ImageData.Borders]
 	if !ok {
 		// This area has no devices mapped.
