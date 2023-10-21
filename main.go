@@ -47,7 +47,7 @@ func handleError(err error) {
 func main() {
 	args = config.Parse()
 
-	if !config.Validate() {
+	if !args.Validate() {
 		os.Exit(-1)
 	}
 

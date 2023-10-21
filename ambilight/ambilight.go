@@ -27,9 +27,9 @@ type Ambilight struct {
 // TODO: handle negative values
 type AmbilightConfiguration struct {
 	// target frames per second
-	Fps int
+	Fps uint
 	// max number of worker threads
-	Workers int
+	Workers uint
 }
 
 // Go fires up the ambilight.
@@ -41,7 +41,7 @@ func (a *Ambilight) Go() error {
 	frameDurationTarget := time.Duration(1000/a.Config.Fps) * time.Millisecond
 
 	// Create worker pool that can perform as many tasks as possible, given the allowed workers
-	maxParallelTasks := max(len(a.Screen.Areas), len(a.Universes))
+	maxParallelTasks := max(uint(len(a.Screen.Areas)), uint(len(a.Universes)))
 	workerPool := newWorkerPool(min(a.Config.Workers, maxParallelTasks))
 
 	for {
@@ -111,14 +111,14 @@ func getColorJob(a *Ambilight, area capture.Area) func() {
 
 }
 
-func min(a int, b int) int {
+func min(a uint, b uint) uint {
 	if a < b {
 		return a
 	}
 	return b
 }
 
-func max(a int, b int) int {
+func max(a uint, b uint) uint {
 	if a > b {
 		return a
 	}
@@ -126,5 +126,4 @@ func max(a int, b int) int {
 }
 
 // Mapping holds a mapping from screen areas to DMX devices.
-// FIXME: it makes no sense to have more than one device per area as this would overwrite colors
 type Mapping map[*image.Rectangle][]*dmx.Device
