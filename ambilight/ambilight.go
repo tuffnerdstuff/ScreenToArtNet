@@ -40,12 +40,9 @@ func (a *Ambilight) Go() error {
 	start := time.Now()
 	frameDurationTarget := time.Duration(1000/a.Config.Fps) * time.Millisecond
 
-	// Create color workers
-	colorWorkers := newWorkerPool(a.Config.Workers)
-
-	// Create network workers
-	// TODO: make configurable
-	networkWorkers := newWorkerPool(1)
+	// Create worker pool that can perform as many tasks as possible, given the allowed workers
+	maxParallelTasks := max(len(a.Screen.Areas), len(a.Universes))
+	workerPool := newWorkerPool(min(a.Config.Workers, maxParallelTasks))
 
 	for {
 		frameStart := time.Now()
@@ -58,7 +55,7 @@ func (a *Ambilight) Go() error {
 		for _, area := range a.Screen.Areas {
 			colorJobs.enqueue(getColorJob(a, area))
 		}
-		colorWorkers.workOn(colorJobs)
+		workerPool.workOn(colorJobs)
 
 		var networkJobs queue
 		for _, u := range a.Universes {
@@ -70,7 +67,7 @@ func (a *Ambilight) Go() error {
 				}
 			})
 		}
-		networkWorkers.workOn(networkJobs)
+		workerPool.workOn(networkJobs)
 
 		// Handle the performance display
 		if iter == maxIter {
@@ -116,6 +113,13 @@ func getColorJob(a *Ambilight, area capture.Area) func() {
 
 func min(a int, b int) int {
 	if a < b {
+		return a
+	}
+	return b
+}
+
+func max(a int, b int) int {
+	if a > b {
 		return a
 	}
 	return b
