@@ -1,0 +1,30 @@
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  tagged-release:
+    name: "Tagged Release"
+    runs-on: "ubuntu-latest"
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./
+
+    steps:
+      - name: "Checkout Code" 
+        uses: actions/checkout@v2
+      - name: "Install go"
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.18
+      - name: "Build Binaries"
+        run: |
+          ./release.sh ${{github.ref_name}}
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          prerelease: false
+          files: |
+            *.tar.gz
